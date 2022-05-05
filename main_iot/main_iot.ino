@@ -20,8 +20,12 @@ TBlendType    currentBlending;
 int currentMode = 0;
 extern CRGBPalette16 myRedWhiteBluePalette;
 extern const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM;
+
 // Web //
 AsyncWebServer server(80);
+const char* PARAM_INPUT_1 = "output";
+const char* PARAM_INPUT_2 = "state";
+
 const char* ssid     = "LabPi";     //改成您的SSID 
 const char* password = "12345678";   //改成您的密碼
 
