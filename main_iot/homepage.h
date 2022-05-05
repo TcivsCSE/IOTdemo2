@@ -103,7 +103,7 @@ const char index_html[] PROGMEM = R"rawliteral(
                         checkbox.disabled = false;
                         fetch(`/update?output=${checkbox.id}&state=0`)
                         .catch(error => {})
-                    }, 5000);
+                    }, 500);
                 }
             })
         })

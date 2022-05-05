@@ -6,6 +6,7 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include "homepage.h"
+
 // LED //
 #define LED_PIN     25
 #define NUM_LEDS    90
@@ -16,12 +17,14 @@
 CRGB leds[NUM_LEDS];
 CRGBPalette16 currentPalette;
 TBlendType    currentBlending;
+int currentMode = 0;
 extern CRGBPalette16 myRedWhiteBluePalette;
 extern const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM;
 // Web //
 AsyncWebServer server(80);
 const char* ssid     = "LabPi";     //改成您的SSID 
 const char* password = "12345678";   //改成您的密碼
+
 
 IPAddress local_IP(192, 168, 9, 139);
 IPAddress gateway(192, 168, 9, 254);
@@ -42,27 +45,19 @@ String processor(const String& var){
   return String();
 }
 
+String outputState(int output){
+  if(currentMode){
+    return "checked disabled";
+  }
+  else {
+    return "";
+  }
+}
 
 void serverRoute(){
   // Route for root / web page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-  if(!request->authenticate(http_username, http_password))
-    return request->requestAuthentication();
     request->send_P(200, "text/html", index_html, processor);
-  });
-  // Route for root / web page
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    if(!request->authenticate(http_username, http_password))
-      return request->requestAuthentication();
-    request->send_P(200, "text/html", index_html, processor);
-  });
-    
-  server.on("/logout", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(401);
-  });
-
-  server.on("/logged-out", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send_P(200, "text/html", logout_html, processor);
   });
   
   // Send a GET request to <ESP_IP>/update?output=<inputMessage1>&state=<inputMessage2>
@@ -75,14 +70,15 @@ void serverRoute(){
     if (request->hasParam(PARAM_INPUT_1) && request->hasParam(PARAM_INPUT_2)) {
       inputMessage1 = request->getParam(PARAM_INPUT_1)->value();
       inputMessage2 = request->getParam(PARAM_INPUT_2)->value();
-      digitalWrite(inputMessage1.toInt(), inputMessage2.toInt());
+      changeLEDMode(inputMessage2.toInt());
+      
     }
     else {
       inputMessage1 = "No message sent";
       inputMessage2 = "No message sent";
     }
-    delay(50000);
-    Serial.print("GPIO: ");
+    delay(500);
+    Serial.print("LEDStrip: ");
     Serial.print(inputMessage1);
     Serial.print(" - Set to: ");
     Serial.println(inputMessage2);
@@ -237,9 +233,10 @@ const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM =
     CRGB::Black,
     CRGB::Black
 };
-
-void changeLEDMode(){
-    
+void changeLEDMode(int modeNum){
+  
+    if( modeNum ==  0)  { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND; }
+    if( modeNum == 1)  { SetupBlackAndWhiteStripedPalette();       currentBlending = LINEARBLEND; }
     static uint8_t startIndex = 0;
     startIndex = startIndex + 1; /* motion speed */
     
