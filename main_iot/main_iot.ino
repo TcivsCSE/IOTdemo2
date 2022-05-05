@@ -9,7 +9,7 @@
 
 // LED //
 #define LED_PIN     25
-#define NUM_LEDS    90
+#define NUM_LEDS    120
 #define BRIGHTNESS  128
 #define LED_TYPE    WS2812B
 #define COLOR_ORDER GRB
@@ -20,14 +20,15 @@ TBlendType    currentBlending;
 int currentMode = 0;
 extern CRGBPalette16 myRedWhiteBluePalette;
 extern const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM;
+TaskHandle_t ledFill;
 
 // Web //
 AsyncWebServer server(80);
 const char* PARAM_INPUT_1 = "output";
 const char* PARAM_INPUT_2 = "state";
 
-const char* ssid     = "LabPi";     //改成您的SSID 
-const char* password = "12345678";   //改成您的密碼
+const char* ssid     = "pwn_m3_p1s";     //改成您的SSID 
+const char* password = "studyh0rd";   //改成您的密碼
 
 
 IPAddress local_IP(192, 168, 9, 139);
@@ -41,7 +42,7 @@ String processor(const String& var){
   if(var == "BUTTONPLACEHOLDER"){
     String buttons = "";
     buttons += "<div class='box'><label class='switch'><p>3F選手室門禁</p><input type='checkbox'id=\"5\" " + outputState(5) + "><span></span></label></div>";
-//    buttons += "<p>Output - GPIO 5</p><label class=\"switch\"><input type=\"checkbox\" onchange=\"toggleCheckbox(this)\" id=\"5\" " + outputState(5) + "><span class=\"slider\"></span></label>";
+    buttons += "<p>Output - GPIO 5</p><label class=\"switch\"><input type=\"checkbox\" onchange=\"toggleCheckbox(this)\" id=\"5\" " + outputState(5) + "><span class=\"slider\"></span></label>";
     //buttons += "<h4>Output - GPIO 4</h4><label class=\"switch\"><input type=\"checkbox\" onchange=\"toggleCheckbox(this)\" id=\"4\" " + outputState(4) + "><span class=\"slider\"></span></label>";
     //buttons += "<h4>Output - GPIO 2</h4><label class=\"switch\"><input type=\"checkbox\" onchange=\"toggleCheckbox(this)\" id=\"2\" " + outputState(2) + "><span class=\"slider\"></span></label>";
     return buttons;
@@ -74,7 +75,7 @@ void serverRoute(){
     if (request->hasParam(PARAM_INPUT_1) && request->hasParam(PARAM_INPUT_2)) {
       inputMessage1 = request->getParam(PARAM_INPUT_1)->value();
       inputMessage2 = request->getParam(PARAM_INPUT_2)->value();
-      changeLEDMode(inputMessage2.toInt());
+      currentMode = inputMessage2.toInt();
       
     }
     else {
@@ -95,7 +96,7 @@ void serverRoute(){
 
 
 void otaSetup(){
-    // 埠號預設為8266
+  // 埠號預設為8266
   // ArduinoOTA.setPort(8266);   // 沿用預設值
   ArduinoOTA.setHostname("TCIVSCSE-mainiot");
   
@@ -134,13 +135,7 @@ void otaSetup(){
   
   // 啟用OTA
   ArduinoOTA.begin();
-  // OTA End //
 
-    FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
-    FastLED.setBrightness(  BRIGHTNESS );
-    
-    currentPalette = RainbowColors_p;
-    currentBlending = LINEARBLEND;
 }
 
 void wifiSetup(){
@@ -159,13 +154,29 @@ void wifiSetup(){
   }
 }
 
+
 void setup() {
   delay( 3000 ); // power-up safety delay
   Serial.begin(115200);
   wifiSetup();
   otaSetup();
   serverRoute();
-  
+  FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
+  FastLED.setBrightness(  BRIGHTNESS );
+  currentPalette = RainbowColors_p;
+  currentBlending = LINEARBLEND;
+
+
+  Serial.print("setup led thread");
+  //在核心0啟動任務1
+  xTaskCreatePinnedToCore(
+  ledFill_Loop, /*任務實際對應的Function*/
+  "doTheUpload", /*任務名稱*/
+  10000, /*堆疊空間*/
+  NULL, /*無輸入值*/
+  0, /*優先序0*/
+  &ledFill, /*對應的任務變數位址*/
+  1); /*指定在核心0執行 */
 }
 
 void FillLEDsFromPaletteColors( uint8_t colorIndex)
@@ -237,18 +248,21 @@ const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM =
     CRGB::Black,
     CRGB::Black
 };
-void changeLEDMode(int modeNum){
-  
-    if( modeNum ==  0)  { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND; }
-    if( modeNum == 1)  { SetupBlackAndWhiteStripedPalette();       currentBlending = LINEARBLEND; }
+
+void ledFill_Loop(void * pvParameters ) {
+    Serial.println("111");
+//    if( currentMode == 1)  { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND; }
+//    if( currentMode == 2)  { SetupBlackAndWhiteStripedPalette();       currentBlending = LINEARBLEND; }
     static uint8_t startIndex = 0;
     startIndex = startIndex + 1; /* motion speed */
     
-    FillLEDsFromPaletteColors( startIndex);
+    FillLEDsFromPaletteColors(startIndex);
     
     FastLED.show();
     FastLED.delay(1000 / UPDATES_PER_SECOND);
+
 }
+
 
 void loop() {
   // OTA Start //
