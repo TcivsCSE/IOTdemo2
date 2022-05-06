@@ -2,11 +2,6 @@ import cv2
 import handTracking
 
 
-
-lastPoint = handTracking.landmark(
-    0, 960, 540,
-)
-
 def main():
     wCam, hCam = 1280,720
     cap = cv2.VideoCapture(0)  
@@ -15,6 +10,9 @@ def main():
     pTime = 0
     cTime = 0
     dector = handTracking.handDector()
+    lastPoint = handTracking.landmark(
+        0, 960, 540
+    )
     while True:
         success, img = cap.read()
         img = dector.findHands(img)
@@ -22,9 +20,9 @@ def main():
         if len(handList) != 0:
             point = handList[0][0]
 
-            if (point.x - lastPoint.x > 500):
+            if (point.x - lastPoint.x > 200):
                 print("right")
-            elif (point.x - lastPoint.x < -500):
+            elif (point.x - lastPoint.x < -200):
                 print("left")
 
 
