@@ -9,8 +9,8 @@
 
 // LED //
 #define LED_PIN     25
-#define NUM_LEDS    120
-#define BRIGHTNESS  128
+#define NUM_LEDS    60
+#define BRIGHTNESS  255
 #define LED_TYPE    WS2812B
 #define COLOR_ORDER GRB
 #define UPDATES_PER_SECOND 100
@@ -20,7 +20,6 @@ TBlendType    currentBlending;
 int currentMode = 0;
 extern CRGBPalette16 myRedWhiteBluePalette;
 extern const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM;
-TaskHandle_t ledFill;
 
 // Web //
 AsyncWebServer server(80);
@@ -165,18 +164,6 @@ void setup() {
   FastLED.setBrightness(  BRIGHTNESS );
   currentPalette = RainbowColors_p;
   currentBlending = LINEARBLEND;
-
-
-  Serial.print("setup led thread");
-  //在核心0啟動任務1
-  xTaskCreatePinnedToCore(
-  ledFill_Loop, /*任務實際對應的Function*/
-  "doTheUpload", /*任務名稱*/
-  10000, /*堆疊空間*/
-  NULL, /*無輸入值*/
-  0, /*優先序0*/
-  &ledFill, /*對應的任務變數位址*/
-  1); /*指定在核心0執行 */
 }
 
 void FillLEDsFromPaletteColors( uint8_t colorIndex)
@@ -249,10 +236,16 @@ const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM =
     CRGB::Black
 };
 
-void ledFill_Loop(void * pvParameters ) {
+
+
+void loop() {
+  // OTA Start //
+  ArduinoOTA.handle();
+  // OTA End //
+  
     Serial.println("111");
-//    if( currentMode == 1)  { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND; }
-//    if( currentMode == 2)  { SetupBlackAndWhiteStripedPalette();       currentBlending = LINEARBLEND; }
+    if( currentMode == 1)  { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND; }
+    if( currentMode == 2)  { SetupBlackAndWhiteStripedPalette();       currentBlending = LINEARBLEND; }
     static uint8_t startIndex = 0;
     startIndex = startIndex + 1; /* motion speed */
     
@@ -260,13 +253,6 @@ void ledFill_Loop(void * pvParameters ) {
     
     FastLED.show();
     FastLED.delay(1000 / UPDATES_PER_SECOND);
-
-}
-
-
-void loop() {
-  // OTA Start //
-  ArduinoOTA.handle();
-  // OTA End //
+  
   
 }
