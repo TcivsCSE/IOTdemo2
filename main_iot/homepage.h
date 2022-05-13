@@ -1,8 +1,6 @@
 const char index_html[] PROGMEM = R"rawliteral(
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>3F選手室門禁系統</title>
+<html lang="en"><head>
+    <title>彩燈控制</title>
     <meta charset="UTF-8">
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="./main.css">
@@ -80,25 +78,53 @@ const char index_html[] PROGMEM = R"rawliteral(
             border-radius: 10px;
             font-size: 24px;
         }
+        .modelist-div {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+        }
+        .modelist-div > p {
+            margin-right: 20px;
+        }
+        #modelist {
+            font-size: 15px;
+            padding: 5px 5px;
+            padding-right: 50px;
+        }
     </style>
 </head>
 <body>
     <h2>ESP Web Server</h2>
     <main>
-    <select id="modelist">
-        <option value="">請選擇你最愛的寵物</option>
-        <option value="1">1</option>
-        <option value="2" selected>2</option>
-        <option value="3">3</option>
-        <option value="4">4</option>
-        <option value="5" 5>Spider</option>
-        <option value="6">6</option>
-    </select>
-<div class='box'><label class='switch'><p>彩燈開關</p><input type='checkbox' id=5><span></span></label></div>
-
+        <div class="modelist-div">
+            <p>彩燈模式選擇</p>
+            <select id="modelist">
+                <option value="">請選擇</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+            </select>
+        </div>
+        <div class="box">
+            <label class="switch">
+                <p>彩燈開關</p>
+                <input type="checkbox" id="5">
+                <span></span>
+            </label>
+        </div>
     </main>
     <script>
         let checkboxs = document.querySelectorAll('input[type=checkbox]');
+        let select = document.querySelector("#modelist");
+        select.addEventListener("change", (ev) => {
+            console.log(ev.target.value);
+            fetch(`/update?state=${ev.target.value}`)
+            .catch(error => {})
+        });
         checkboxs.forEach(checkbox => {
             let flag = 1;
             checkbox.addEventListener("change", () => {
@@ -108,7 +134,7 @@ const char index_html[] PROGMEM = R"rawliteral(
                     let ind = selectlists.selectedIndex;
                     let list_val = selectlists.options[ind].value;
                     let tex = selectlists.options[ind].text;
-                    fetch(`/update?output=${checkbox.id}&state=${list_val}`)
+                    fetch(`/update?state=${list_val}`)
                     .catch(error => {})
                     checkbox.disabled = true;
                     setTimeout(() => {
@@ -130,5 +156,5 @@ const char index_html[] PROGMEM = R"rawliteral(
           setTimeout(function(){ window.open("/logged-out","_self"); }, 1000);
         }
     </script>
-</body>
-</html>)rawliteral";
+
+</body></html>)rawliteral";
