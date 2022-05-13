@@ -10,7 +10,7 @@ class landmark:
 
         
 class handDector():
-    def __init__(self,mode =False,maxHands =1,dectionCon = 0.5,trackCon=0.5):
+    def __init__(self,mode =False,maxHands =1,dectionCon = 1,trackCon=1):
         self.mode = mode
         self.maxHands = maxHands
         self.dectionCon = dectionCon
@@ -55,7 +55,7 @@ class handDector():
 
 def main():
     wCam, hCam = 1280,720
-    cap = cv2.VideoCapture(0)  
+    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
     cap.set(3,wCam)
     cap.set(4,hCam)
     pTime = 0
@@ -70,10 +70,10 @@ def main():
             print(f"id:{point.id} pos:({point.x},{point.y})")
         
         # show fps 
-        # cTime = time.time()
-        # fps = 1/(cTime-pTime)
-        # pTime = cTime
-        # cv2.putText(img,str(int(fps)),(10,70),cv2.FONT_HERSHEY_PLAIN,3,(255,0,255),3)
+        cTime = time.time()
+        fps = 1/(cTime-pTime)
+        pTime = cTime
+        cv2.putText(img,str(int(fps)),(10,70),cv2.FONT_HERSHEY_PLAIN,3,(255,0,255),3)
 
 
 

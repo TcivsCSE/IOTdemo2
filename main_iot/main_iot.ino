@@ -1,11 +1,13 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h> 
 #include <WiFi.h>
+#include <PubSubClient.h>
 #include <ESPmDNS.h>
 #include <FastLED.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include "homepage.h"
+
 
 // LED //
 #define LED_PIN     25
@@ -20,6 +22,14 @@ TBlendType    currentBlending;
 int currentMode = 0;
 extern CRGBPalette16 myRedWhiteBluePalette;
 extern const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM;
+
+// 設定主題名稱
+const char topic[] = "tcivs/box/door";
+// 設定開機主題名稱
+const char ctrlTopic[] = "tcivs/ctrl/door";
+
+WiFiClient espClient;
+PubSubClient client(espClient);
 
 // Web //
 AsyncWebServer server(80);
@@ -36,17 +46,51 @@ IPAddress subnet(255, 255, 255, 0);
 IPAddress primaryDNS(101, 101, 101, 101); // optional
 IPAddress secondaryDNS(168, 95, 1, 1); // optional
 
-String processor(const String& var){
-  //Serial.println(var);
-  if(var == "BUTTONPLACEHOLDER"){
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("收到來自 [");
+  Serial.print(topic);
+  Serial.print("] 的訊息");
+
+  Serial.println((char)payload[0] - '0');
+  if ((char)payload[0] - '0'){
+    digitalWrite(relayPin, HIGH);
+    delay(1200);
+    digitalWrite(relayPin, LOW);
+  }
+  
+  Serial.println();
+
+}
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("收到來自 [");
+  Serial.print(topic);
+  Serial.print("] 的訊息");
+
+  Serial.println((char)payload[0] - '0');
+  if ((char)payload[0] - '0'){
+    digitalWrite(relayPin, HIGH);
+    delay(1200);
+    digitalWrite(relayPin, LOW);
+  }
+  
+  Serial.println();
+
+}
+
+
+String processor(const String& varc){
+  Serial.println(varc);
+  //if(var == "BUTTONPLACEHOLDER"){
     String buttons = "";
     buttons += "<div class='box'><label class='switch'><p>3F選手室門禁</p><input type='checkbox'id=\"5\" " + outputState(5) + "><span></span></label></div>";
     buttons += "<p>Output - GPIO 5</p><label class=\"switch\"><input type=\"checkbox\" onchange=\"toggleCheckbox(this)\" id=\"5\" " + outputState(5) + "><span class=\"slider\"></span></label>";
     //buttons += "<h4>Output - GPIO 4</h4><label class=\"switch\"><input type=\"checkbox\" onchange=\"toggleCheckbox(this)\" id=\"4\" " + outputState(4) + "><span class=\"slider\"></span></label>";
     //buttons += "<h4>Output - GPIO 2</h4><label class=\"switch\"><input type=\"checkbox\" onchange=\"toggleCheckbox(this)\" id=\"2\" " + outputState(2) + "><span class=\"slider\"></span></label>";
     return buttons;
-  }
-  return String();
+  //}
+  return String("ABC");
 }
 
 String outputState(int output){
@@ -61,7 +105,7 @@ String outputState(int output){
 void serverRoute(){
   // Route for root / web page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send_P(200, "text/html", index_html, processor);
+    request->send_P(200, "text/html", index_html);
   });
   
   // Send a GET request to <ESP_IP>/update?output=<inputMessage1>&state=<inputMessage2>
@@ -162,8 +206,8 @@ void setup() {
   serverRoute();
   FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
   FastLED.setBrightness(  BRIGHTNESS );
-  currentPalette = RainbowColors_p;
-  currentBlending = LINEARBLEND;
+  //currentPalette = RainbowColors_p;
+  //currentBlending = LINEARBLEND;
 }
 
 void FillLEDsFromPaletteColors( uint8_t colorIndex)
@@ -192,6 +236,14 @@ void SetupBlackAndWhiteStripedPalette()
     currentPalette[4] = CRGB::White;
     currentPalette[8] = CRGB::White;
     currentPalette[12] = CRGB::White;
+    
+}
+
+
+void SetupBlackPalette()
+{
+    // 'black out' all 16 palette entries...
+    fill_solid( currentPalette, 16, CRGB::Black);
     
 }
 
@@ -242,10 +294,18 @@ void loop() {
   // OTA Start //
   ArduinoOTA.handle();
   // OTA End //
-  
-    Serial.println("111");
-    if( currentMode == 1)  { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND; }
-    if( currentMode == 2)  { SetupBlackAndWhiteStripedPalette();       currentBlending = LINEARBLEND; }
+    if( currentMode == 0)  { SetupBlackPalette();     currentBlending = LINEARBLEND; }
+    if( currentMode ==  1)  { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND; }
+    if( currentMode ==  2)  { currentPalette = RainbowStripeColors_p;   currentBlending = NOBLEND;  }
+    if( currentMode ==  3)  { currentPalette = RainbowStripeColors_p;   currentBlending = LINEARBLEND; }
+    if( currentMode ==  4)  { SetupPurpleAndGreenPalette();             currentBlending = LINEARBLEND; }
+    if( currentMode ==  5)  { SetupTotallyRandomPalette();              currentBlending = LINEARBLEND; }
+    if( currentMode ==  6)  { SetupBlackAndWhiteStripedPalette();       currentBlending = NOBLEND; }
+    if( currentMode ==  7)  { SetupBlackAndWhiteStripedPalette();       currentBlending = LINEARBLEND; }
+    if( currentMode ==  8)  { currentPalette = CloudColors_p;           currentBlending = LINEARBLEND; }
+    if( currentMode ==  9)  { currentPalette = PartyColors_p;           currentBlending = LINEARBLEND; }
+    if( currentMode == 10)  { currentPalette = myRedWhiteBluePalette_p; currentBlending = NOBLEND;  }
+    if( currentMode == 11)  { currentPalette = myRedWhiteBluePalette_p; currentBlending = LINEARBLEND; }
     static uint8_t startIndex = 0;
     startIndex = startIndex + 1; /* motion speed */
     
