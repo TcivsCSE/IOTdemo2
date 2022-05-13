@@ -2,7 +2,11 @@ import cv2
 import handTracking
 
 
+
+
+
 def main():
+    global mode 
     wCam, hCam = 1920,1080
     cap = cv2.VideoCapture(0)  
     cap.set(3,wCam)
@@ -26,8 +30,10 @@ def main():
                 for finger in [8,12,16,20]:
                     fingers.append(hand[finger].y < hand[finger-2].y)
 
-                print(fingers)
-                    
+    
+
+                
+                
 
 
         cv2.imshow("Image",img)

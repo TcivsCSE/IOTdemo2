@@ -10,7 +10,7 @@ class landmark:
 
         
 class handDector():
-    def __init__(self,mode =False,maxHands =1,dectionCon = 1,trackCon=1):
+    def __init__(self,mode =False,maxHands =1,dectionCon = 0.5,trackCon=0.5):
         self.mode = mode
         self.maxHands = maxHands
         self.dectionCon = dectionCon
@@ -20,8 +20,8 @@ class handDector():
         self.mpHands =  mp.solutions.hands
         self.hands = self.mpHands.Hands(self.mode,
                                         self.maxHands,
-                                        self.dectionCon,
-                                        self.trackCon)
+                                        min_detection_confidence = self.dectionCon,
+                                        min_tracking_confidence = self.trackCon)
         self.mpDraw = mp.solutions.drawing_utils
 
 

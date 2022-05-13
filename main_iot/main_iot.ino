@@ -23,21 +23,29 @@ int currentMode = 0;
 extern CRGBPalette16 myRedWhiteBluePalette;
 extern const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM;
 
+// WIFI資訊
+//const char* ssid     = "TCIVS_CSE_IoT";
+//const char* password = "MyPassW0rd";
+const char* ssid     = "pwn_m3_p1s";     //改成您的SSID 
+const char* password = "studyh0rd";   //改成您的密碼
 // 設定主題名稱
-const char topic[] = "tcivs/box/door";
+const char topic[] = "tcivs/box/rainbow";
 // 設定開機主題名稱
-const char ctrlTopic[] = "tcivs/ctrl/door";
+const char ctrlTopic[] = "tcivs/ctrl/rainbow";
+// mqtt broker位置
+const char* mqtt_server = "192.168.9.130";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
+unsigned long lastMsg = 0;
+unsigned long value = 0;
+#define MSG_BUFFER_SIZE  (50)
+char msg[MSG_BUFFER_SIZE];
 
 // Web //
 AsyncWebServer server(80);
 const char* PARAM_INPUT_1 = "output";
 const char* PARAM_INPUT_2 = "state";
-
-const char* ssid     = "pwn_m3_p1s";     //改成您的SSID 
-const char* password = "studyh0rd";   //改成您的密碼
 
 
 IPAddress local_IP(192, 168, 9, 139);
@@ -53,30 +61,31 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("] 的訊息");
 
   Serial.println((char)payload[0] - '0');
-  if ((char)payload[0] - '0'){
-    digitalWrite(relayPin, HIGH);
-    delay(1200);
-    digitalWrite(relayPin, LOW);
-  }
+  currentMode = (char)payload[0] - '0';
   
   Serial.println();
 
 }
 
-void callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("收到來自 [");
-  Serial.print(topic);
-  Serial.print("] 的訊息");
-
-  Serial.println((char)payload[0] - '0');
-  if ((char)payload[0] - '0'){
-    digitalWrite(relayPin, HIGH);
-    delay(1200);
-    digitalWrite(relayPin, LOW);
+void reconnect() {
+  while (!client.connected()) {
+    Serial.print("嘗試連線到MQTT Broker... ");
+    // Attempt to connect
+    String clientID = "ESP32Client2";
+    if (client.connect(clientID.c_str())) {
+      Serial.println("connected");
+      // Once connected, publish an announcement...
+      client.publish(ctrlTopic, "door connect");
+      // ... and resubscribe
+      client.subscribe(topic);
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
   }
-  
-  Serial.println();
-
 }
 
 
@@ -204,6 +213,8 @@ void setup() {
   wifiSetup();
   otaSetup();
   serverRoute();
+  client.setServer(mqtt_server, 1883);
+  client.setCallback(callback);
   FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
   FastLED.setBrightness(  BRIGHTNESS );
   //currentPalette = RainbowColors_p;
@@ -288,12 +299,7 @@ const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM =
     CRGB::Black
 };
 
-
-
-void loop() {
-  // OTA Start //
-  ArduinoOTA.handle();
-  // OTA End //
+void mode_select(){
     if( currentMode == 0)  { SetupBlackPalette();     currentBlending = LINEARBLEND; }
     if( currentMode ==  1)  { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND; }
     if( currentMode ==  2)  { currentPalette = RainbowStripeColors_p;   currentBlending = NOBLEND;  }
@@ -306,6 +312,14 @@ void loop() {
     if( currentMode ==  9)  { currentPalette = PartyColors_p;           currentBlending = LINEARBLEND; }
     if( currentMode == 10)  { currentPalette = myRedWhiteBluePalette_p; currentBlending = NOBLEND;  }
     if( currentMode == 11)  { currentPalette = myRedWhiteBluePalette_p; currentBlending = LINEARBLEND; }
+}
+
+void loop() {
+    // OTA Start //
+    ArduinoOTA.handle();
+    // OTA End //
+  
+    mode_select();
     static uint8_t startIndex = 0;
     startIndex = startIndex + 1; /* motion speed */
     
@@ -313,6 +327,20 @@ void loop() {
     
     FastLED.show();
     FastLED.delay(1000 / UPDATES_PER_SECOND);
+    
+    if (!client.connected()) {
+    reconnect();
+    }
+    client.loop();
   
+    unsigned long now = millis();
+    if (now - lastMsg > 2000) {
+      lastMsg = now;
+      ++value;
+      snprintf (msg, MSG_BUFFER_SIZE, "hello world #%ld", value);
+  //    Serial.print("Publish message: ");
+  //    Serial.println(msg);
+  //    client.publish(topic, msg);
+    }
   
 }
