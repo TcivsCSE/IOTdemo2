@@ -63,9 +63,6 @@ def detectHandsLandmarks(image, hands, draw=True, display = True):
         # Return the output image and results of hands landmarks detection.
         return output_image, results              
 
-# Read a sample image and perform hands landmarks detection on it.
-image = cv2.imread('media/sample.jpg')
-detectHandsLandmarks(image, hands, display=True)
 
 
 def countFingers(image, results, draw=True, display=True):
