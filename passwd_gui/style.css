@@ -1,0 +1,63 @@
+body {
+  background-color: #1E2228;
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  width: 100vw;
+  justify-content: center;
+  justify-items: center;
+  align-items: center;
+
+}
+
+div.main {
+  justify-content: center;
+  justify-items: center;
+  align-items: center;
+}
+
+p.code-label {
+  color: #FFFFFF;
+  font-family: monospace;
+  font-size: 80;
+  text-decoration: underline;
+}
+
+p.title {
+  color: #FFFFFF;
+  font-family: monospace;
+  font-size: 40;
+  flex: 100%;
+  width: 100vw;
+  text-align: center;
+}
+
+div.code-group {
+  display: flex;
+  flex: 100%;
+  justify-content: center;
+}
+
+div.code-group>p.code-label {
+  margin: 26px;
+}
+
+button.crack-btn {
+  width: 260;
+  height: 80;
+  background-color: #23272E;
+  color: #E7E7E7;
+  border-radius: 20px;
+  font-size: 26;
+  font-family: monospace;
+}
+
+div.btn-div {
+  width: 100vw;
+  justify-items: center;
+  justify-content: center;
+  display: flex;
+  margin-top: 30px;
+}

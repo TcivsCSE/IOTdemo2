@@ -1,0 +1,103 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="style.css">
+    <script src="mqtt.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <p class="title">Waiting...</>
+      <div class="code-group">
+        <p class="code-label" index="0">0</p>
+        <p class="code-label" index="1">0</p>
+        <p class="code-label" index="2">0</p>
+        <p class="code-label" index="3">0</p>
+      </div>
+      <div class="btn-div">
+        <button class="crack-btn" onclick="buttonCallback()" value="Crack!">
+          Crack!
+        </button>
+      </div>
+    </div>
+  </body>
+  <script>
+    var hostname = "192.168.9.130"
+    var port = "8080"
+
+    var connected = false;
+    var client = new Paho.MQTT.Client(hostname, Number(port),"");
+
+    client.startTrace();
+    var options = {
+      invocationContext: { host: hostname, port:port, clientId: "" },
+      timeout: 5,
+      keepAliveInterval: 60,
+      cleanSession: true,
+      useSSL: false,
+      onSuccess: onConnect,
+      onFailure: onFail,
+      mqttVersion: 4
+    };
+
+    client.connect(options)
+
+    client.onConnected = onConnected
+    client.onMessageArrived = onMessageArrived
+    client.onConnectionLost = onConnectionLost
+
+    function onConnect(context) {
+      var connectionString = context.invocationContext.host + ":" + context.invocationContext.port + context.invocationContext.path;
+      document.querySelector(".title").innerHTML = "Connected to " + hostname
+      connected = true;
+    }
+
+    function onFail(context) {
+      connected = false;
+    }
+
+    function onConnected(reconnect, uri) {
+      connected = true;
+    }
+    
+    function getRandomInt(max) {
+      return Math.floor(Math.random() * max);
+    }
+
+    function genPasswd() {
+      let ascii = '!#$%&*0123456789?@ABCDEFGHIJKLMNOPQRSTUVWXYZ^abcdefghijklmnopqrstuvwxyz~';
+      let res = []
+      for(let i = 0; i < 4; i += 1) {
+        res.push(ascii.charAt(getRandomInt(ascii.length)))
+      }
+      return res
+    }
+
+    function publish(topic , message){
+      send = new Paho.MQTT.Message(message)
+      send.destinationName = topic
+      send.qos = 0 ;
+      send.retain = false;
+      client.send(send);
+    }
+
+    function doorOpen(){
+      date = new Date()
+      state.classList.add("open")
+      publish("tcivs/box/door",`1  - [${date}]`)
+      console.log("[success] door open")
+    }
+
+    async function buttonCallback() {
+      let ascii = '!#$%&*0123456789?@ABCDEFGHIJKLMNOPQRSTUVWXYZ^abcdefghijklmnopqrstuvwxyz~';
+      let passwd = ["C", "S", "I", "E"];
+      for(var codeIndex = 0; codeIndex < 4; codeIndex += 1) {
+        for(var charIndex = 0; charIndex < ascii.length; charIndex += 1) {
+          item = document.querySelector(`p.code-label[index='${codeIndex}']`).innerHTML = ascii.charAt(charIndex)
+          if (ascii.charAt(charIndex) === passwd[codeIndex]) {
+            break
+          }
+          await new Promise(resolve => setTimeout(resolve, 30));
+        }
+      }
+    }
+  </script>
+</html>
