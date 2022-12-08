@@ -161,8 +161,9 @@ def countFingers(image, results, draw=True, display=True):
         return output_image, fingers_statuses, count
 
 camera_video = cv2.VideoCapture(0)
-camera_video.set(3,1280)
-camera_video.set(4,960)
+wCam, hCam = 1920,1080
+camera_video.set(3,wCam)
+camera_video.set(4,hCam)
 
 # Create named window for resizing purposes.
 cv2.namedWindow('Fingers Counter', cv2.WINDOW_NORMAL)
