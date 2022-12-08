@@ -50,6 +50,15 @@
       connected = true;
     }
 
+    function onMessageArrived(message) {
+
+    }
+
+    function onConnectionLost(responseObject) {
+      document.querySelector(".title").innerHTML = "Disconnected"
+      connected = false;
+    }
+
     function onFail(context) {
       connected = false;
     }
@@ -81,7 +90,6 @@
 
     function doorOpen(){
       date = new Date()
-      state.classList.add("open")
       publish("tcivs/box/door",`1  - [${date}]`)
       console.log("[success] door open")
     }
@@ -93,11 +101,12 @@
         for(var charIndex = 0; charIndex < ascii.length; charIndex += 1) {
           item = document.querySelector(`p.code-label[index='${codeIndex}']`).innerHTML = ascii.charAt(charIndex)
           if (ascii.charAt(charIndex) === passwd[codeIndex]) {
-            break
+            break;
           }
           await new Promise(resolve => setTimeout(resolve, 30));
         }
       }
+      doorOpen();
     }
   </script>
 </html>
