@@ -24,16 +24,19 @@ extern CRGBPalette16 myRedWhiteBluePalette;
 extern const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM;
 
 // WIFI資訊
-//const char* ssid     = "TCIVS_CSE_IoT";
-//const char* password = "MyPassW0rd";
-const char* ssid     = "pwn_m3_p1s";     //改成您的SSID 
-const char* password = "studyh0rd";   //改成您的密碼
+const char* ssid     = "TCIVS_CSE_IoT";
+const char* password = "MyPassW0rd";
+//const char* ssid     = "pwn_m3_p1s";     //改成您的SSID 
+//const char* password = "studyh0rd";   //改成您的密碼
 // 設定主題名稱
 const char topic[] = "tcivs/box/rainbow";
 // 設定開機主題名稱
 const char ctrlTopic[] = "tcivs/ctrl/rainbow";
 // mqtt broker位置
 const char* mqtt_server = "192.168.9.130";
+
+// relay
+#define replayPin 4
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -64,6 +67,13 @@ void callback(char* topic, byte* payload, unsigned int length) {
   currentMode = (char)payload[0] - '0';
   
   Serial.println();
+  mode_select();
+  static uint8_t startIndex = 0;
+  startIndex = startIndex + 1; /* motion speed */
+  
+  FillLEDsFromPaletteColors(startIndex);
+  
+  
 
 }
 
@@ -319,19 +329,14 @@ void loop() {
     ArduinoOTA.handle();
     // OTA End //
   
-    mode_select();
-    static uint8_t startIndex = 0;
-    startIndex = startIndex + 1; /* motion speed */
-    
-    FillLEDsFromPaletteColors(startIndex);
-    
-    FastLED.show();
-    FastLED.delay(1000 / UPDATES_PER_SECOND);
+
     
     if (!client.connected()) {
     reconnect();
     }
     client.loop();
+    FastLED.show();
+    FastLED.delay(1000 / UPDATES_PER_SECOND);
   
     unsigned long now = millis();
     if (now - lastMsg > 2000) {
