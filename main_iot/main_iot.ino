@@ -5,7 +5,7 @@
 #include <ESPmDNS.h>
 #include <FastLED.h>
 #include <AsyncTCP.h>
-#include <ESPAsyncWebServer.h>
+#include <ESPAsyncWebSrv.h>
 #include "homepage.h"
 
 
@@ -34,9 +34,11 @@ const char topic[] = "tcivs/box/rainbow";
 const char ctrlTopic[] = "tcivs/ctrl/rainbow";
 // mqtt broker位置
 const char* mqtt_server = "192.168.9.130";
-
+unsigned long startMillis;  //some global variables available anywhere in the program
+unsigned long currentMillis;
+const unsigned long period = 1000;
 // relay
-#define replayPin 4
+#define relayPin 4
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -227,6 +229,8 @@ void setup() {
   client.setCallback(callback);
   FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
   FastLED.setBrightness(  BRIGHTNESS );
+  startMillis = millis();  //initial start time
+  pinMode(relayPin,OUTPUT);
   //currentPalette = RainbowColors_p;
   //currentBlending = LINEARBLEND;
 }
@@ -309,22 +313,31 @@ const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM =
     CRGB::Black
 };
 
+void openDoor(){
+  digitalWrite(relayPin,1);
+  delay(1000);
+  digitalWrite(relayPin,0);
+  
+}
+
+
 void mode_select(){
     if( currentMode == 0)  { SetupBlackPalette();     currentBlending = LINEARBLEND; }
     if( currentMode ==  1)  { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND; }
     if( currentMode ==  2)  { currentPalette = RainbowStripeColors_p;   currentBlending = NOBLEND;  }
-    if( currentMode ==  3)  { currentPalette = RainbowStripeColors_p;   currentBlending = LINEARBLEND; }
+    if( currentMode ==  3)  { currentPalette = myRedWhiteBluePalette_p;   currentBlending = LINEARBLEND; }
     if( currentMode ==  4)  { SetupPurpleAndGreenPalette();             currentBlending = LINEARBLEND; }
     if( currentMode ==  5)  { SetupTotallyRandomPalette();              currentBlending = LINEARBLEND; }
     if( currentMode ==  6)  { SetupBlackAndWhiteStripedPalette();       currentBlending = NOBLEND; }
     if( currentMode ==  7)  { SetupBlackAndWhiteStripedPalette();       currentBlending = LINEARBLEND; }
     if( currentMode ==  8)  { currentPalette = CloudColors_p;           currentBlending = LINEARBLEND; }
-    if( currentMode ==  9)  { currentPalette = PartyColors_p;           currentBlending = LINEARBLEND; }
-    if( currentMode == 10)  { currentPalette = myRedWhiteBluePalette_p; currentBlending = NOBLEND;  }
+    if( currentMode ==  9)  { openDoor();           currentBlending = LINEARBLEND; }
+    if( currentMode == 10)  { openDoor(); currentBlending = NOBLEND;  }
     if( currentMode == 11)  { currentPalette = myRedWhiteBluePalette_p; currentBlending = LINEARBLEND; }
 }
 
 void loop() {
+
     // OTA Start //
     ArduinoOTA.handle();
     // OTA End //
